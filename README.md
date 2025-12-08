@@ -8,7 +8,6 @@ image and stack these descriptions for a set time period(say 10 mins) to then ge
 requirements and the goal is to see if segmentation of the tasks allows for smaller and less computation demanding models with similar accuracies to state of the 
 art video summarisers.
 
-The methodology used is a combination of VGG16 for feature extraction from the frames and Transformers for caption generation as well as summarisation. 
 
 
 Application scope is primarity in surveillance eg. a house security camera or a praking lot camera, something that does not need full attention by the user.

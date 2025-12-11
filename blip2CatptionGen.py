@@ -6,12 +6,12 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from transformers import AutoProcessor, Blip2ForConditionalGeneration
 
-dirPath = 'Frames'
+dirPath = 'Your Frames Directory'
 framesPath = os.path.join(dirPath, "*.jpg")
 imageFiles = sorted(glob.glob(framesPath))
 
 # --- Getting the vid fps to then decide the timestamp acc to the respective frame no ---
-cap = cv2.VideoCapture("example.mp4")
+cap = cv2.VideoCapture("Your Video.mp4")
 fps = cap.get(cv2.CAP_PROP_FPS)
 if fps == 0:
    fps = 30 # --- incase it fails ---

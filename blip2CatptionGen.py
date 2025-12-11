@@ -11,13 +11,12 @@ framesPath = os.path.join(dirPath, "*.jpg")
 imageFiles = sorted(glob.glob(framesPath))
 
 # --- Getting the vid fps to then decide the timestamp acc to the respective frame no ---
-cap = cv2.VideoCapture("your_video.mp4")
+cap = cv2.VideoCapture("example.mp4")
 fps = cap.get(cv2.CAP_PROP_FPS)
 if fps == 0:
-    fps = 30 # --- incase it fails
+   fps = 30 # --- incase it fails ---
 frame_numbers = [int(os.path.basename(f).split('.')[0].split('_')[-1]) for f in imageFiles]
 timestamps = [fn / fps for fn in frame_numbers]
-
 
 # --- Check if the images have been successfully read ----
 if not imageFiles:
@@ -31,20 +30,12 @@ if not images:
     print("Could not get the valid images")
     exit()
 
-for i, image in enumerate(images):
-    cv2.imshow('View', image) 
-    key = cv2.waitKey(0)
-
-cv2.destroyAllWindows()
-
-
 # --- initialize the model and processor ---
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-processor = AutoProcessor.from_pretrained("Salesforce/blip2-flan-t5-xl")
+processor = AutoProcessor.from_pretrained("Salesforce/blip2-flan-t5-xl") # --- for smaller GPU Salesforce/blip2-opt-2.7b ---
 model = Blip2ForConditionalGeneration.from_pretrained("Salesforce/blip2-flan-t5-xl", torch_dtype=torch.float16)
 
 model.to(device)
-
 
 captions = []
 
@@ -52,6 +43,7 @@ captions = []
 for i, img in enumerate(images):
     print(f"Image {i+1} of {len(images)} ({os.path.basename(imageFiles[i])})")
     
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     inputs = processor(img, return_tensors="pt").to(device, torch.float16) 
     generated_ids = model.generate(**inputs, max_new_tokens=20)
     generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
@@ -65,3 +57,25 @@ embeds = sumModel.encode(captions, normalize_embeddings=True)
 
 # --- calculate the similarity score ---
 simScore = [np.dot(embeds[i], embeds[i + 1]) for i in range(len(embeds) - 1)]
+
+threshold = 0.60
+clusters = []
+current = [0]
+
+# --- Clubbing together the clusters that have high similarity ---
+for i, score in enumerate(simScore):
+  if(score >= threshold):
+    current.append(i + 1)
+  else:
+    clusters.append(current)
+    current = [i + 1]
+
+clusters.append(current)
+
+# --- Printing the clusters with their respective timestamps ---
+for idx, cluster in enumerate(clusters):
+  start = cluster[0]
+  end = cluster[-1]
+  print(f"Between {timestamps[start]:.2f}s and {timestamps[end]:.2f}s")
+  print(f"\t{captions[start]}")
+  print(f"\n")
